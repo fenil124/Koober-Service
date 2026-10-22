@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: royalrides-travels
+    runtime: node
+    plan: starter # Render paid instance recommended for 24/7 SLA; free instances spin down after 15m
+    region: oregon
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
+      - key: NEXT_PUBLIC_DEMO_MODE
+        value: "false"
+      - key: VITE_DEMO_MODE
+        value: "false"
+      - key: MONGODB_URI
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
+

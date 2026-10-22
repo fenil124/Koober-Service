@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-script: 'Great Vibes', cursive;
+    --primary-navy: #071A35;
+    --dark-navy: #0A1B36;
+    --accent-gold: #F5B936;
+    --gold-hover: #E5A928;
+    --gold-light: #FFF9EC;
+    --bg-page: #F7F9FC;
+    --text-primary: #071A35;
+    --text-secondary: #5A6A80;
+    --border-color: #E2E8F0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #071A35;
+    background-color: #F7F9FC;
+  }
+
+  body {
+    background-color: #F7F9FC;
+    color: #071A35;
+    min-height: 100vh;
+  }
+}
+
+.font-script {
+  font-family: var(--font-script), cursive;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Continuous Review Marquee Ticker (Right to Left) */
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 35s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee:hover,
+.marquee-paused {
+  animation-play-state: paused !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none !important;
+  }
+}
+

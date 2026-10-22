@@ -1,0 +1,50 @@
+name: Render Keep-Alive Monitor
+
+on:
+  schedule:
+    # Ping every 5 minutes (Render free tier inactivity timeout is 15 minutes)
+    - cron: '*/5 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab for instant testing
+
+jobs:
+  ping-health:
+    name: Ping Health Endpoint
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Ping Health Endpoint
+        run: |
+          # Retrieve target URL from repository variable (vars.SITE_URL) or secret (secrets.SITE_URL)
+          TARGET_URL="${{ vars.SITE_URL || secrets.SITE_URL }}"
+
+          if [ -z "$TARGET_URL" ]; then
+            echo "⚠️ SITE_URL is not configured yet in GitHub repository settings."
+            echo "👉 To enable keep-alive monitoring:"
+            echo "   1. Go to repository Settings > Secrets and variables > Actions > Variables"
+            echo "   2. Click 'New repository variable'"
+            echo "   3. Name: SITE_URL, Value: https://your-app-name.onrender.com (without trailing slash)"
+            exit 0
+          fi
+
+          # Strip trailing slash if present
+          CLEAN_URL="${TARGET_URL%/}"
+          HEALTH_URL="${CLEAN_URL}/api/health"
+
+          echo "Pinging health endpoint: ${HEALTH_URL}"
+          
+          # Perform lightweight probe with 20s timeout without exposing secret headers
+          HTTP_RESPONSE=$(curl -s -S --max-time 20 -w "\n%{http_code}" "$HEALTH_URL" || true)
+          HTTP_BODY=$(echo "$HTTP_RESPONSE" | sed '$d')
+          HTTP_STATUS=$(echo "$HTTP_RESPONSE" | tail -n1)
+
+          echo "HTTP Status Code: ${HTTP_STATUS}"
+          echo "Response Body: ${HTTP_BODY}"
+
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+            echo "✅ Health check succeeded. Service is active and responsive."
+            exit 0
+          else
+            echo "❌ Health check failed with status code ${HTTP_STATUS}."
+            exit 1
+          fi
