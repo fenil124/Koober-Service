@@ -95,7 +95,7 @@ export function Header({ onOpenInquiry, onOpenBooking }: HeaderProps) {
               onClick={onOpenInquiry}
               className="sm:hidden px-2.5 py-1.5 rounded-full border border-white/20 text-white text-[11px] font-bold hover:border-[#F5B936] transition-colors"
             >
-              Inquiry
+              Inquiry Now
             </button>
             <button
               type="button"

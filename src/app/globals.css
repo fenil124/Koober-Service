@@ -62,7 +62,10 @@
 .animate-marquee {
   display: flex;
   width: max-content;
-  animation: marquee-scroll 35s linear infinite;
+  animation-name: marquee-scroll;
+  animation-duration: var(--marquee-duration, 35s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
   will-change: transform;
 }
 

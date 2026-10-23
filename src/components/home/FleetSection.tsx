@@ -127,6 +127,7 @@ export function FleetSection({ cars, settings, onSelectCar }: FleetSectionProps)
       left: direction === 'right' ? scrollAmount : -scrollAmount,
       behavior: prefersReducedMotion ? 'auto' : 'smooth',
     });
+    setTimeout(checkScrollBounds, 350);
   };
 
   const handleCardClick = (car: Car) => {
@@ -156,7 +157,7 @@ export function FleetSection({ cars, settings, onSelectCar }: FleetSectionProps)
       className="py-14 sm:py-20 bg-white border-b border-[#E2E8F0] scroll-mt-20 sm:scroll-mt-24 select-none overflow-hidden"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header with Category Tabs & Nav Arrows */}
+        {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 sm:mb-10">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-[#F5B936] uppercase tracking-[0.2em] mb-2">
@@ -169,36 +170,6 @@ export function FleetSection({ cars, settings, onSelectCar }: FleetSectionProps)
             <p className="mt-2 text-sm sm:text-base text-[#64748B] leading-relaxed max-w-2xl">
               Explore our chauffeur-driven vehicles for comfortable city journeys, airport transfers, and outstation travel.
             </p>
-          </div>
-
-          {/* Carousel Arrows on Desktop / Tablet */}
-          <div className="hidden sm:flex items-center gap-3 shrink-0">
-            <button
-              type="button"
-              onClick={() => scroll('left')}
-              disabled={!canScrollLeft}
-              className={`p-3 rounded-full border transition-all duration-200 cursor-pointer ${
-                canScrollLeft
-                  ? 'border-slate-300 bg-white text-[#081A33] hover:bg-slate-50 hover:border-[#F5B936] shadow-sm'
-                  : 'border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed opacity-50'
-              }`}
-              aria-label="Previous vehicles"
-            >
-              <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
-            </button>
-            <button
-              type="button"
-              onClick={() => scroll('right')}
-              disabled={!canScrollRight}
-              className={`p-3 rounded-full border transition-all duration-200 cursor-pointer ${
-                canScrollRight
-                  ? 'border-slate-300 bg-white text-[#081A33] hover:bg-slate-50 hover:border-[#F5B936] shadow-sm'
-                  : 'border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed opacity-50'
-              }`}
-              aria-label="Next vehicles"
-            >
-              <ChevronRight className="w-5 h-5 stroke-[2.5]" />
-            </button>
           </div>
         </div>
 
@@ -223,15 +194,32 @@ export function FleetSection({ cars, settings, onSelectCar }: FleetSectionProps)
           })}
         </div>
 
-        {/* Horizontal Vehicle Carousel */}
-        <div
-          ref={carouselRef}
-          className="flex gap-5 sm:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-6 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar"
-          style={{
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-          }}
-        >
+        {/* Horizontal Vehicle Carousel with White Navigation Side Buttons */}
+        <div className="relative">
+          {/* Previous Button (Left Side) */}
+          <button
+            type="button"
+            onClick={() => scroll('left')}
+            disabled={!canScrollLeft}
+            className={`hidden sm:flex absolute -left-2 sm:-left-3 lg:-left-5 top-[46%] -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full items-center justify-center bg-white border border-slate-200 transition-all duration-200 ${
+              canScrollLeft
+                ? 'text-[#081A33] shadow-md hover:shadow-lg hover:bg-slate-50 hover:scale-105 active:scale-95 cursor-pointer'
+                : 'text-slate-300 shadow-xs cursor-not-allowed'
+            }`}
+            aria-label="Previous vehicles"
+          >
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5]" />
+          </button>
+
+          {/* Horizontal Vehicle Carousel */}
+          <div
+            ref={carouselRef}
+            className="flex gap-5 sm:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-6 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+            }}
+          >
           {filteredCars.map((car, idx) => {
             const rating = car.rating || 4.9;
             const reviewCount = car.review_count_text || `(${car.review_count || 1000}+)`;
@@ -372,6 +360,22 @@ export function FleetSection({ cars, settings, onSelectCar }: FleetSectionProps)
             );
           })}
         </div>
+
+        {/* Next Button (Right Side) */}
+        <button
+          type="button"
+          onClick={() => scroll('right')}
+          disabled={!canScrollRight}
+          className={`hidden sm:flex absolute -right-2 sm:-right-3 lg:-right-5 top-[46%] -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full items-center justify-center bg-white border border-slate-200 transition-all duration-200 ${
+            canScrollRight
+              ? 'text-[#081A33] shadow-md hover:shadow-lg hover:bg-slate-50 hover:scale-105 active:scale-95 cursor-pointer'
+              : 'text-slate-300 shadow-xs cursor-not-allowed'
+          }`}
+          aria-label="Next vehicles"
+        >
+          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5]" />
+        </button>
+      </div>
 
         {/* Mobile Swipe Cue & Counter */}
         <div className="sm:hidden flex items-center justify-between text-xs text-slate-400 px-1 pt-1">

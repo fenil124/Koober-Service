@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Star, Pause, Play, MessageSquarePlus } from 'lucide-react';
 import { Review } from '@/types';
 import { WriteReviewModal } from '@/components/common/WriteReviewModal';
@@ -10,10 +10,13 @@ interface ReviewsSectionProps {
   onReviewSubmitted?: () => void;
 }
 
+const TARGET_SPEED_PX_PER_SEC = 50; // Constant scrolling speed in pixels per second
+
 export function ReviewsSection({ reviews, onReviewSubmitted }: ReviewsSectionProps) {
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const trackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -68,8 +71,8 @@ export function ReviewsSection({ reviews, onReviewSubmitted }: ReviewsSectionPro
   const baseList = approvedReviews.length > 0 ? approvedReviews : canonicalReviews;
 
   // Build seamless loop list: ensure track is wide enough on all screens
-  // We repeat the base items so the first half exactly equals the second half
-  const repeatedCount = Math.max(2, Math.ceil(8 / baseList.length));
+  // We repeat base items if few reviews exist, then duplicate once for 0% -> -50% infinite loop
+  const repeatedCount = Math.max(1, Math.ceil(6 / baseList.length));
   const fullSequence: Review[] = [];
   for (let i = 0; i < repeatedCount; i++) {
     fullSequence.push(...baseList);
@@ -77,6 +80,51 @@ export function ReviewsSection({ reviews, onReviewSubmitted }: ReviewsSectionPro
 
   // Exactly duplicate fullSequence to achieve seamless 0% -> -50% loop
   const loopList = [...fullSequence, ...fullSequence];
+
+  // Duration in seconds: trackWidth / 2 / speed
+  const [animationDuration, setAnimationDuration] = useState<number>(() => {
+    // Card width (~360px on sm+) + 20px gap = 380px per item
+    const estimatedDistancePx = (loopList.length / 2) * 380;
+    return Math.max(20, Math.round(estimatedDistancePx / TARGET_SPEED_PX_PER_SEC));
+  });
+
+  // Dynamically calculate and maintain constant speed based on rendered track dimensions
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+
+    const measureAndSetDuration = () => {
+      // scrollWidth is the total width of the entire duplicated track
+      const totalWidth = el.scrollWidth;
+      // Distance traveled in one full cycle (0% to -50%) is totalWidth / 2
+      const halfTrackDistancePx = totalWidth / 2;
+
+      if (halfTrackDistancePx > 0) {
+        const calculatedSeconds = halfTrackDistancePx / TARGET_SPEED_PX_PER_SEC;
+        setAnimationDuration((prev) => {
+          if (Math.abs(prev - calculatedSeconds) < 0.2) return prev;
+          return Math.round(calculatedSeconds * 10) / 10;
+        });
+      }
+    };
+
+    measureAndSetDuration();
+
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => {
+        measureAndSetDuration();
+      });
+      ro.observe(el);
+    }
+
+    window.addEventListener('resize', measureAndSetDuration);
+
+    return () => {
+      if (ro) ro.disconnect();
+      window.removeEventListener('resize', measureAndSetDuration);
+    };
+  }, [loopList.length]);
 
   return (
     <section
@@ -167,8 +215,15 @@ export function ReviewsSection({ reviews, onReviewSubmitted }: ReviewsSectionPro
             ))}
           </div>
         ) : (
-          // Continuous seamless marquee animation (CSS Hardware Accelerated)
-          <div className={`animate-marquee gap-5 px-3 ${isPaused ? 'marquee-paused' : ''}`}>
+          // Continuous seamless marquee animation (CSS Hardware Accelerated with Constant Velocity)
+          <div
+            ref={trackRef}
+            style={{
+              animationDuration: `${animationDuration}s`,
+              ['--marquee-duration' as any]: `${animationDuration}s`,
+            }}
+            className={`animate-marquee gap-5 px-3 ${isPaused ? 'marquee-paused' : ''}`}
+          >
             {loopList.map((rev, index) => {
               const isFirstHalf = index < loopList.length / 2;
               return (
