@@ -7,9 +7,10 @@ import { Logo } from '@/components/common/Logo';
 
 interface HeaderProps {
   onOpenInquiry?: () => void;
+  onOpenBooking?: () => void;
 }
 
-export function Header({ onOpenInquiry }: HeaderProps) {
+export function Header({ onOpenInquiry, onOpenBooking }: HeaderProps) {
   const location = useLocation();
   const isHomePage = location.pathname === '/' || location.pathname === '';
 
@@ -37,6 +38,8 @@ export function Header({ onOpenInquiry }: HeaderProps) {
 
   // On non-homepage views (e.g. /fleet/:slug), always keep solid dark navy brand background
   const showSolidBackground = isScrolled || !isHomePage;
+
+  const handleBookingClick = onOpenBooking || onOpenInquiry;
 
   return (
     <header
@@ -66,12 +69,19 @@ export function Header({ onOpenInquiry }: HeaderProps) {
             ))}
           </nav>
 
-          {/* Gold 'Book Now' button on the right */}
-          <div className="hidden sm:flex items-center gap-3">
+          {/* Action buttons on the right: Inquiry Now and Book Now */}
+          <div className="hidden sm:flex items-center gap-2.5">
             <button
               type="button"
               onClick={onOpenInquiry}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#F5B936] hover:bg-[#E5A928] text-[#071A35] text-xs font-extrabold shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-white/20 hover:border-[#F5B936] text-white hover:text-[#F5B936] bg-white/5 hover:bg-white/10 text-xs font-bold transition-all duration-200 cursor-pointer active:scale-95"
+            >
+              <span>Inquiry Now</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleBookingClick}
+              className="inline-flex items-center gap-1.5 px-4.5 py-2 rounded-full bg-[#F5B936] hover:bg-[#E5A928] text-[#071A35] text-xs font-extrabold shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
             >
               <span>Book Now</span>
               <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -79,18 +89,25 @@ export function Header({ onOpenInquiry }: HeaderProps) {
           </div>
 
           {/* Mobile menu toggle */}
-          <div className="flex items-center gap-2 lg:hidden">
+          <div className="flex items-center gap-1.5 lg:hidden">
             <button
               type="button"
               onClick={onOpenInquiry}
-              className="sm:hidden px-3.5 py-1.5 rounded-full bg-[#F5B936] text-[#071A35] text-[11px] font-extrabold"
+              className="sm:hidden px-2.5 py-1.5 rounded-full border border-white/20 text-white text-[11px] font-bold hover:border-[#F5B936] transition-colors"
+            >
+              Inquiry
+            </button>
+            <button
+              type="button"
+              onClick={handleBookingClick}
+              className="sm:hidden px-3 py-1.5 rounded-full bg-[#F5B936] text-[#071A35] text-[11px] font-extrabold"
             >
               Book Now
             </button>
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-white bg-white/10 hover:bg-white/20 rounded-lg transition-colors cursor-pointer"
+              className="p-1.5 text-white bg-white/10 hover:bg-white/20 rounded-lg transition-colors cursor-pointer ml-0.5"
               aria-label="Toggle Navigation"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -115,12 +132,22 @@ export function Header({ onOpenInquiry }: HeaderProps) {
             ))}
           </div>
 
-          <div className="pt-2">
+          <div className="pt-2 space-y-2">
             <button
               type="button"
               onClick={() => {
                 setMobileMenuOpen(false);
                 if (onOpenInquiry) onOpenInquiry();
+              }}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-full border border-white/20 text-white hover:text-[#F5B936] text-xs font-bold transition-all"
+            >
+              <span>Inquiry Now</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                if (handleBookingClick) handleBookingClick();
               }}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-full bg-[#F5B936] hover:bg-[#E5A928] text-[#071A35] text-xs font-extrabold shadow-lg transition-all"
             >

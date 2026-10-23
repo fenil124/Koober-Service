@@ -9,6 +9,7 @@ import {
   Send,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   Calendar,
   Clock,
   MapPin,
@@ -17,14 +18,16 @@ import {
   Loader2,
 } from 'lucide-react';
 import { inquiryFormSchema, InquiryFormSchemaType } from '@/lib/validations';
-import { Car, InquiryFormInput } from '@/types';
+import { Car, InquiryFormInput, SubmissionType } from '@/types';
 import { DataStore } from '@/lib/data-store';
+import { isShortNoticeDate } from '@/lib/utils';
 
 interface InquiryModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   cars: Car[];
   prefilledData?: Partial<InquiryFormInput>;
+  submissionType?: SubmissionType;
   onSuccess?: () => void;
 }
 
@@ -33,6 +36,7 @@ export function InquiryModal({
   onOpenChange,
   cars,
   prefilledData,
+  submissionType = 'booking',
   onSuccess,
 }: InquiryModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,6 +44,10 @@ export function InquiryModal({
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const activeCars = cars.filter((c) => c.is_active);
+
+  const currentSubmissionType: SubmissionType =
+    prefilledData?.submission_type || submissionType || 'booking';
+  const isBooking = currentSubmissionType === 'booking';
 
   const {
     register,
@@ -61,31 +69,37 @@ export function InquiryModal({
       car_name: '',
       passengers: 4,
       trip_type: 'one-way',
+      submission_type: currentSubmissionType,
       message: '',
     },
   });
 
   const tripType = watch('trip_type');
   const selectedCarId = watch('car_id');
+  const travelDate = watch('travel_date');
+  const isShortNotice = isShortNoticeDate(travelDate);
 
   // Handle prefilled data
   useEffect(() => {
-    if (open && prefilledData) {
-      if (prefilledData.pickup_location) setValue('pickup_location', prefilledData.pickup_location);
-      if (prefilledData.destination) setValue('destination', prefilledData.destination);
-      if (prefilledData.car_id) {
-        setValue('car_id', prefilledData.car_id);
-        const car = cars.find((c) => c.id === prefilledData.car_id);
-        if (car) setValue('car_name', car.name);
-      } else if (prefilledData.car_name) {
-        const car = cars.find((c) => c.name.toLowerCase() === prefilledData.car_name?.toLowerCase());
-        if (car) {
-          setValue('car_id', car.id);
-          setValue('car_name', car.name);
+    if (open) {
+      setValue('submission_type', currentSubmissionType);
+      if (prefilledData) {
+        if (prefilledData.pickup_location) setValue('pickup_location', prefilledData.pickup_location);
+        if (prefilledData.destination) setValue('destination', prefilledData.destination);
+        if (prefilledData.car_id) {
+          setValue('car_id', prefilledData.car_id);
+          const car = cars.find((c) => c.id === prefilledData.car_id);
+          if (car) setValue('car_name', car.name);
+        } else if (prefilledData.car_name) {
+          const car = cars.find((c) => c.name.toLowerCase() === prefilledData.car_name?.toLowerCase());
+          if (car) {
+            setValue('car_id', car.id);
+            setValue('car_name', car.name);
+          }
         }
       }
     }
-  }, [open, prefilledData, cars, setValue]);
+  }, [open, prefilledData, cars, setValue, currentSubmissionType]);
 
   // Reset success state on open
   useEffect(() => {
@@ -110,6 +124,7 @@ export function InquiryModal({
       await DataStore.submitInquiry({
         ...data,
         car_name: carName,
+        submission_type: currentSubmissionType,
       });
 
       setSubmitSuccess(true);
@@ -134,10 +149,12 @@ export function InquiryModal({
                 <span>KOOBER SERVICES</span>
               </div>
               <DialogPrimitive.Title className="text-lg sm:text-xl font-extrabold tracking-tight">
-                Plan Your Journey
+                {isBooking ? 'Plan Your Journey' : 'Inquire With Koober'}
               </DialogPrimitive.Title>
               <DialogPrimitive.Description className="text-xs text-slate-300">
-                Fill details below for an instant chauffeur-driven ride quote.
+                {isBooking
+                  ? 'Fill details below for an instant chauffeur-driven ride quote.'
+                  : 'Submit your journey inquiry and our travel team will assist you.'}
               </DialogPrimitive.Description>
             </div>
             <DialogPrimitive.Close asChild>
@@ -159,10 +176,12 @@ export function InquiryModal({
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
                 <h3 className="text-xl font-extrabold text-[#071A35]">
-                  Inquiry Received!
+                  {isBooking ? 'Booking Request Received!' : 'Inquiry Received!'}
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                  Thank you! Our travel coordinator has received your journey details and will call you with a tailored itinerary and confirmation shortly.
+                  {isBooking
+                    ? 'Thank you! Our travel coordinator has received your journey details and will call you with a tailored itinerary and confirmation shortly.'
+                    : 'Thank you! Our travel coordinator has received your inquiry and will reach out with the details shortly.'}
                 </p>
                 <div className="pt-4">
                   <button
@@ -325,6 +344,17 @@ export function InquiryModal({
                   </div>
                 </div>
 
+                {/* Short-notice surcharge warning */}
+                {isShortNotice && (
+                  <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200/90 text-amber-900 text-xs flex items-start gap-2.5 animate-in fade-in slide-in-from-top-1">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <p className="leading-relaxed">
+                      <span className="font-bold text-amber-950">Short-notice booking: </span>
+                      For rides booked for today or tomorrow, an additional charge of approximately ₹1,000–₹2,000 may apply, depending on the ride price and travel requirements. Our team will confirm the final amount.
+                    </p>
+                  </div>
+                )}
+
                 {/* Car Selection & Passengers */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
@@ -390,17 +420,19 @@ export function InquiryModal({
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Sending Request...</span>
+                        <span>{isBooking ? 'Sending Booking Request...' : 'Sending Inquiry...'}</span>
                       </>
                     ) : (
                       <>
                         <Send className="w-4 h-4" />
-                        <span>Submit Booking Request</span>
+                        <span>{isBooking ? 'Submit Booking Request' : 'Submit Inquiry'}</span>
                       </>
                     )}
                   </button>
                   <p className="mt-2 text-center text-[11px] text-slate-500">
-                    No advance payment required now. Our team confirms exact fare and driver details.
+                    {isBooking
+                      ? 'No advance payment required now. Our team confirms exact fare and driver details.'
+                      : 'Our team will respond to your journey inquiry with complete assistance.'}
                   </p>
                 </div>
               </form>

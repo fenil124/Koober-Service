@@ -7,10 +7,11 @@ import { HomepageSection, SiteSettings } from '@/types';
 
 interface AboutSectionProps {
   content?: HomepageSection;
+  featuresContent?: HomepageSection;
   settings?: SiteSettings;
 }
 
-export function AboutSection({ content }: AboutSectionProps) {
+export function AboutSection({ content, featuresContent }: AboutSectionProps) {
   const benefitHighlights = [
     {
       title: 'Comfortable Vehicles',
@@ -101,8 +102,23 @@ export function AboutSection({ content }: AboutSectionProps) {
 
             {/* Paragraph 2 */}
             <p className="mt-3 text-sm sm:text-base text-[#64748B] leading-relaxed">
-              We help customers choose the right vehicle for their journey, with clear pricing where available and a simple enquiry process. Our team contacts customers to discuss their requirements and confirm travel arrangements.
+              {content?.subtitle ||
+                'We help customers choose the right vehicle for their journey, with clear pricing where available and a simple enquiry process. Our team contacts customers to discuss their requirements and confirm travel arrangements.'}
             </p>
+
+            {/* Features & Promise Highlights Banner (Dynamic from Admin) */}
+            {featuresContent?.body && (
+              <div className="mt-4 p-3.5 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-[#F5B936] uppercase tracking-wider mb-1">
+                  <span>{featuresContent.badge || 'OUR PROMISE'}</span>
+                  <span>&bull;</span>
+                  <span className="text-[#081A33] font-extrabold">{featuresContent.title || 'Why Choose Koober Services'}</span>
+                </div>
+                <p className="text-xs text-[#64748B] leading-relaxed">
+                  {featuresContent.body}
+                </p>
+              </div>
+            )}
 
             {/* 3 Compact Benefit Highlights */}
             <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3.5">

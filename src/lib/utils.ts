@@ -48,6 +48,29 @@ export function getTelUrl(phone: string | undefined): string {
   return `tel:${phone.replace(/[^0-9+]/g, '')}`;
 }
 
+export function getIndiaDateStrings() {
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  const todayStr = formatter.format(now); // "YYYY-MM-DD"
+  
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const tomorrowStr = formatter.format(tomorrow);
+
+  return { todayStr, tomorrowStr };
+}
+
+export function isShortNoticeDate(dateString?: string | null): boolean {
+  if (!dateString) return false;
+  const cleanDate = dateString.trim().split('T')[0];
+  const { todayStr, tomorrowStr } = getIndiaDateStrings();
+  return cleanDate === todayStr || cleanDate === tomorrowStr;
+}
+
 export {
   isCloudinaryUrl,
   getOptimizedCloudinaryUrl,

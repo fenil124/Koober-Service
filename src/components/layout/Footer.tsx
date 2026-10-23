@@ -109,7 +109,7 @@ export function Footer({ settings }: FooterProps) {
             {/* Circular Social Icons */}
             <div className="flex items-center gap-2">
               <a
-                href="https://facebook.com"
+                href={settings?.facebook_url || 'https://facebook.com'}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook"
@@ -118,7 +118,7 @@ export function Footer({ settings }: FooterProps) {
                 <FacebookIcon className="w-3.5 h-3.5" />
               </a>
               <a
-                href="https://instagram.com"
+                href={settings?.instagram_url || 'https://instagram.com'}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
@@ -127,7 +127,7 @@ export function Footer({ settings }: FooterProps) {
                 <InstagramIcon className="w-3.5 h-3.5" />
               </a>
               <a
-                href="https://youtube.com"
+                href={settings?.youtube_url || 'https://youtube.com'}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="YouTube"

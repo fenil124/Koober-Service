@@ -657,7 +657,53 @@ export default function AdminCarsPage() {
       </div>
 
       {/* 2. Filter Tabs & Search Bar for Fleet */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2">
+      {/* Mobile Controls (Search Row 1, Dual Dropdowns Row 2) */}
+      <div className="flex flex-col gap-3 md:hidden pt-2">
+        {/* Row 1: Full-width search */}
+        <div className="relative w-full">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by model, brand, type..."
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white border border-[#E2E8F0] text-xs text-[#14243A] placeholder:text-slate-400 focus:outline-hidden focus:border-[#0B2C50] shadow-2xs"
+          />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+        </div>
+
+        {/* Row 2: Dual Dropdowns (Status + Category) */}
+        <div className="grid grid-cols-2 gap-2 w-full">
+          <div className="relative w-full">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              className="w-full px-3 py-2.5 rounded-xl bg-white border border-[#E2E8F0] text-xs font-bold text-[#14243A] focus:outline-hidden focus:border-[#0B2C50] shadow-2xs cursor-pointer truncate"
+            >
+              <option value="All">All ({allCount})</option>
+              <option value="Active">Published ({activeCount})</option>
+              <option value="Inactive">Draft ({inactiveCount})</option>
+            </select>
+          </div>
+
+          <div className="relative w-full">
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl bg-white border border-[#E2E8F0] text-xs font-bold text-[#14243A] focus:outline-hidden focus:border-[#0B2C50] shadow-2xs cursor-pointer truncate"
+            >
+              <option value="All">All Categories</option>
+              <option value="MPV">MPV</option>
+              <option value="Sedan">Sedan</option>
+              <option value="Luxury">Luxury</option>
+              <option value="SUV">SUV</option>
+              <option value="Tempo Traveller">Tempo Traveller</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Filter Tabs & Search Bar for Fleet */}
+      <div className="hidden md:flex md:items-center justify-between gap-4 pt-2">
         <div className="flex flex-wrap items-center gap-2">
           {/* Status Tabs */}
           <div className="flex items-center gap-1 p-1 bg-white border border-[#E2E8F0] rounded-xl shadow-2xs">

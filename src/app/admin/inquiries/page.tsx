@@ -14,8 +14,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DataStore } from '@/lib/data-store';
-import { Inquiry, InquiryStatus, Car } from '@/types';
-import { formatDate, getTelUrl, getWhatsAppUrl } from '@/lib/utils';
+import { Inquiry, InquiryStatus, Car, SubmissionType } from '@/types';
+import { formatDate, getTelUrl, getWhatsAppUrl, isShortNoticeDate } from '@/lib/utils';
 import { DeleteConfirmDialog } from '@/components/common/DeleteConfirmDialog';
 import { InquiryStatusBadgeSelect } from '@/components/admin/InquiryStatusBadgeSelect';
 import { ResponsiveModal } from '@/components/common/ResponsiveModal';
@@ -27,6 +27,7 @@ export default function AdminInquiriesPage() {
   const [activeTab, setActiveTab] = useState<
     'All' | 'New' | 'Contacted' | 'Quotation Given' | 'Confirmed' | 'Completed' | 'Cancelled'
   >('All');
+  const [typeFilter, setTypeFilter] = useState<'All' | 'booking' | 'inquiry'>('All');
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -42,6 +43,7 @@ export default function AdminInquiriesPage() {
 
   // Edit form state
   const [editStatus, setEditStatus] = useState<InquiryStatus>('New');
+  const [editSubmissionType, setEditSubmissionType] = useState<SubmissionType>('booking');
   const [editNotes, setEditNotes] = useState('');
   const [editPrice, setEditPrice] = useState<string>('');
 
@@ -53,6 +55,7 @@ export default function AdminInquiriesPage() {
   const [newDate, setNewDate] = useState('');
   const [newCarName, setNewCarName] = useState('');
   const [newPassengers, setNewPassengers] = useState(4);
+  const [newSubmissionType, setNewSubmissionType] = useState<SubmissionType>('booking');
   const [newSource, setNewSource] = useState<'phone' | 'whatsapp' | 'website'>('phone');
 
   const loadData = useCallback(async () => {
@@ -92,6 +95,12 @@ export default function AdminInquiriesPage() {
   // Filtered inquiries
   const filtered = inquiries.filter((i) => {
     if (activeTab !== 'All' && i.status !== activeTab) return false;
+
+    if (typeFilter !== 'All') {
+      const isBooking = i.submission_type !== 'inquiry';
+      if (typeFilter === 'booking' && !isBooking) return false;
+      if (typeFilter === 'inquiry' && isBooking) return false;
+    }
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -138,6 +147,7 @@ export default function AdminInquiriesPage() {
   const handleOpenEdit = (inq: Inquiry) => {
     setSelectedInquiry(inq);
     setEditStatus(inq.status);
+    setEditSubmissionType(inq.submission_type || 'booking');
     setEditNotes(inq.internal_notes || '');
     setEditPrice(inq.agreed_price ? String(inq.agreed_price) : '');
     setErrorMessage(null);
@@ -154,7 +164,8 @@ export default function AdminInquiriesPage() {
         selectedInquiry.id,
         editStatus,
         editNotes,
-        editPrice ? Number(editPrice) : undefined
+        editPrice ? Number(editPrice) : undefined,
+        editSubmissionType
       );
       toast.success('Inquiry record updated successfully');
       setIsEditModalOpen(false);
@@ -206,6 +217,7 @@ export default function AdminInquiriesPage() {
           car_name: newCarName || undefined,
           passengers: newPassengers,
           trip_type: 'one-way',
+          submission_type: newSubmissionType,
         },
         newSource
       );
@@ -216,6 +228,7 @@ export default function AdminInquiriesPage() {
       setNewPhone('');
       setNewDestination('');
       setNewDate('');
+      setNewSubmissionType('booking');
       loadData();
     } catch (err: any) {
       const msg = err?.message || 'Failed to create inquiry record.';
@@ -252,8 +265,56 @@ export default function AdminInquiriesPage() {
         </button>
       </div>
 
-      {/* Tabs & Search Filter */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Mobile Controls (Search Row 1, Dual Dropdowns Row 2) */}
+      <div className="flex flex-col gap-3 md:hidden">
+        {/* Row 1: Search Bar full width */}
+        <div className="relative w-full">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name, phone, destination..."
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white border border-[#E2E8F0] text-xs text-[#14243A] placeholder:text-slate-400 focus:outline-hidden focus:border-[#0B2C50] shadow-2xs"
+          />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+        </div>
+
+        {/* Row 2: Status & Request Type Dropdowns Side-by-Side */}
+        <div className="grid grid-cols-2 gap-2 w-full">
+          {/* Left Dropdown: Status */}
+          <div className="relative w-full">
+            <select
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value as any)}
+              className="w-full px-3 py-2.5 rounded-xl bg-white border border-[#E2E8F0] text-xs font-bold text-[#14243A] focus:outline-hidden focus:border-[#0B2C50] shadow-2xs cursor-pointer truncate"
+            >
+              <option value="All">All ({allCount})</option>
+              <option value="New">New ({newCount})</option>
+              <option value="Contacted">Contacted ({contactedCount})</option>
+              <option value="Quotation Given">Quote Given ({quoteCount})</option>
+              <option value="Confirmed">Confirmed ({confirmedCount})</option>
+              <option value="Completed">Completed ({completedCount})</option>
+              <option value="Cancelled">Cancelled ({cancelledCount})</option>
+            </select>
+          </div>
+
+          {/* Right Dropdown: Request Type */}
+          <div className="relative w-full">
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value as any)}
+              className="w-full px-3 py-2.5 rounded-xl bg-white border border-[#E2E8F0] text-xs font-bold text-[#14243A] focus:outline-hidden focus:border-[#0B2C50] shadow-2xs cursor-pointer truncate"
+            >
+              <option value="All">All Types</option>
+              <option value="booking">Booking Requests</option>
+              <option value="inquiry">General Inquiries</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Controls (Tabs on Left, Type Filter & Search on Right) */}
+      <div className="hidden md:flex md:items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-1.5 p-1 bg-white border border-[#E2E8F0] rounded-xl self-start shadow-2xs">
           <button
             type="button"
@@ -334,25 +395,165 @@ export default function AdminInquiriesPage() {
           </button>
         </div>
 
-        <div className="relative max-w-sm w-full">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by name, phone, destination..."
-            className="w-full pl-9 pr-4 py-2 rounded-xl bg-white border border-[#E2E8F0] text-xs text-[#14243A] focus:outline-hidden focus:border-[#0B2C50] shadow-2xs"
-          />
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+        <div className="flex items-center gap-2 max-w-md w-full">
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value as any)}
+            className="px-3 py-2 rounded-xl bg-white border border-[#E2E8F0] text-xs font-bold text-[#14243A] focus:outline-hidden focus:border-[#0B2C50] shadow-2xs cursor-pointer shrink-0"
+          >
+            <option value="All">All Types</option>
+            <option value="booking">Booking Requests</option>
+            <option value="inquiry">General Inquiries</option>
+          </select>
+
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by name, phone, destination..."
+              className="w-full pl-9 pr-4 py-2 rounded-xl bg-white border border-[#E2E8F0] text-xs text-[#14243A] focus:outline-hidden focus:border-[#0B2C50] shadow-2xs"
+            />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+          </div>
         </div>
       </div>
 
-      {/* Inquiries Table */}
+      {/* Inquiries Content (Mobile Cards on md:hidden, Full Table on hidden md:block) */}
       <div className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden shadow-2xs">
-        <div className="overflow-x-auto">
+        {/* Mobile Inquiry Cards (md:hidden) */}
+        <div className="md:hidden divide-y divide-[#E2E8F0]">
+          {filtered.length === 0 ? (
+            <div className="py-12 px-4 text-center text-xs text-[#64748B]">
+              No inquiries found matching your filters.
+            </div>
+          ) : (
+            filtered.map((inq) => {
+              const isBooking = inq.submission_type !== 'inquiry';
+              const isShortNotice = isShortNoticeDate(inq.travel_date);
+
+              return (
+                <div key={inq.id} className="p-4 space-y-3 hover:bg-slate-50/70 transition-colors">
+                  {/* Customer & Status Header */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-bold text-sm text-[#14243A] truncate">
+                          {inq.customer_name}
+                        </span>
+                        {isBooking ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200 shadow-2xs shrink-0">
+                            Booking Request
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-sky-50 text-sky-700 border border-sky-200 shadow-2xs shrink-0">
+                            Inquiry
+                          </span>
+                        )}
+                        {isShortNotice && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 shrink-0">
+                            Short Notice
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-[#64748B] mt-0.5">
+                        {inq.trip_type === 'round-trip' ? 'Round Trip' : 'One Way'} &bull; {inq.passengers} Pax
+                      </div>
+                    </div>
+
+                    {/* Status Badge Select */}
+                    <div className="shrink-0">
+                      <InquiryStatusBadgeSelect
+                        status={inq.status}
+                        inquiryId={inq.id}
+                        onStatusChange={(newStatus) => handleDirectStatusChange(inq.id, newStatus)}
+                        isLoading={loadingStatusId === inq.id}
+                        disabled={loadingStatusId !== null}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Route & Trip Details Capsule */}
+                  <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-100 space-y-1.5 text-xs text-[#14243A]">
+                    <div className="flex items-center gap-1.5 font-medium">
+                      <span className="text-slate-500 font-normal">Route:</span>
+                      <span className="font-semibold text-[#0B2C50]">{inq.pickup_location}</span>
+                      <span className="text-slate-400">&rarr;</span>
+                      <span className="font-semibold text-[#0B2C50]">{inq.destination}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 text-[11px] text-[#64748B] pt-1 border-t border-slate-200/60">
+                      <div>
+                        <span className="font-semibold text-[#14243A]">Date: </span>
+                        {formatDate(inq.travel_date)}
+                      </div>
+                      <div>
+                        <span className="font-semibold text-[#14243A]">Vehicle: </span>
+                        {inq.car_name || 'Any Car'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contact & Actions Row */}
+                  <div className="flex items-center justify-between gap-2 pt-0.5">
+                    <div className="text-xs font-medium text-[#14243A] flex items-center gap-1.5 truncate">
+                      <span className="text-slate-500 text-[11px]">Phone:</span>
+                      <a href={getTelUrl(inq.phone)} className="font-bold hover:underline text-[#0B2C50] truncate">
+                        {inq.phone}
+                      </a>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <a
+                        href={getTelUrl(inq.phone)}
+                        className="p-1.5 text-slate-600 hover:text-[#0B2C50] hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 bg-white"
+                        title={`Call ${inq.phone}`}
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                      </a>
+                      <a
+                        href={getWhatsAppUrl(
+                          inq.phone,
+                          `Hello ${inq.customer_name}, greetings from Koober Services regarding your journey to ${inq.destination}...`
+                        )}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 text-[#00A859] hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-200 bg-emerald-50/50"
+                        title={`WhatsApp ${inq.phone}`}
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEdit(inq)}
+                        className="p-1.5 text-slate-600 hover:text-[#0B2C50] hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 bg-white cursor-pointer"
+                        title="Edit details"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteTarget(inq)}
+                        className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-red-200 bg-white cursor-pointer"
+                        title="Delete inquiry"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop Inquiries Table (hidden md:block) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[#64748B] font-bold uppercase tracking-wider text-[11px]">
               <tr>
                 <th className="py-3.5 px-4">#</th>
+                <th className="py-3.5 px-4">Type</th>
                 <th className="py-3.5 px-4">Customer</th>
                 <th className="py-3.5 px-4">Phone</th>
                 <th className="py-3.5 px-4">Travel Date</th>
@@ -365,30 +566,52 @@ export default function AdminInquiriesPage() {
             <tbody className="divide-y divide-[#E2E8F0]">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-xs text-[#64748B]">
+                  <td colSpan={9} className="py-12 text-center text-xs text-[#64748B]">
                     No inquiries found matching your filters.
                   </td>
                 </tr>
               ) : (
-                filtered.map((inq, idx) => (
-                  <tr key={inq.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3 px-4 font-bold text-slate-400">
-                      {idx + 1}
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="font-bold text-[#14243A]">
-                        {inq.customer_name}
-                      </div>
-                      <div className="text-[11px] text-[#64748B]">
-                        {inq.trip_type === 'round-trip' ? 'Round Trip' : 'One Way'} &bull; {inq.passengers} Pax
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-[#14243A] font-medium whitespace-nowrap">
-                      {inq.phone}
-                    </td>
-                    <td className="py-3 px-4 text-[#64748B] whitespace-nowrap">
-                      {formatDate(inq.travel_date)}
-                    </td>
+                filtered.map((inq, idx) => {
+                  const isBooking = inq.submission_type !== 'inquiry';
+                  const isShortNotice = isShortNoticeDate(inq.travel_date);
+
+                  return (
+                    <tr key={inq.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-3 px-4 font-bold text-slate-400">
+                        {idx + 1}
+                      </td>
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        {isBooking ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200 shadow-2xs">
+                            Booking Request
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-sky-50 text-sky-700 border border-sky-200 shadow-2xs">
+                            Inquiry
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="font-bold text-[#14243A]">
+                          {inq.customer_name}
+                        </div>
+                        <div className="text-[11px] text-[#64748B]">
+                          {inq.trip_type === 'round-trip' ? 'Round Trip' : 'One Way'} &bull; {inq.passengers} Pax
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-[#14243A] font-medium whitespace-nowrap">
+                        {inq.phone}
+                      </td>
+                      <td className="py-3 px-4 text-[#64748B] whitespace-nowrap">
+                        <div className="font-medium text-[#14243A]">{formatDate(inq.travel_date)}</div>
+                        {isShortNotice && (
+                          <div className="mt-0.5">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                              Short Notice
+                            </span>
+                          </div>
+                        )}
+                      </td>
                     <td className="py-3 px-4 text-[#14243A]">
                       <span className="font-semibold">{inq.pickup_location}</span>
                       <span className="mx-1.5 text-slate-400">&rarr;</span>
@@ -447,8 +670,9 @@ export default function AdminInquiriesPage() {
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
+                );
+              })
+            )}
             </tbody>
           </table>
         </div>
@@ -491,7 +715,63 @@ export default function AdminInquiriesPage() {
           </div>
         )}
 
+        {selectedInquiry && (
+          <div className="mb-4 p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+            <div className="flex items-center justify-between text-[#14243A]">
+              <span className="font-semibold text-slate-600">Travel Date & Time:</span>
+              <span className="font-bold text-[#0B2C50]">
+                {formatDate(selectedInquiry.travel_date)} &bull; {selectedInquiry.travel_time || 'Morning'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-[#14243A]">
+              <span className="font-semibold text-slate-600">Route & Vehicle:</span>
+              <span className="font-medium">
+                {selectedInquiry.pickup_location} &rarr; {selectedInquiry.destination} ({selectedInquiry.car_name || 'Any Car'})
+              </span>
+            </div>
+            {isShortNoticeDate(selectedInquiry.travel_date) && (
+              <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-[11px] flex items-start gap-2">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold">Short-Notice Travel Date: </span>
+                  This request was booked for today or tomorrow. An additional ₹1,000–₹2,000 short-notice charge may apply upon final quotation/confirmation.
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-[#14243A] mb-1">
+              Submission Type
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setEditSubmissionType('booking')}
+                className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                  editSubmissionType === 'booking'
+                    ? 'bg-[#0B2C50] text-white border-[#0B2C50]'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                Booking Request
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditSubmissionType('inquiry')}
+                className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                  editSubmissionType === 'inquiry'
+                    ? 'bg-[#0B2C50] text-white border-[#0B2C50]'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                General Inquiry
+              </button>
+            </div>
+          </div>
+
           <div>
             <label className="block text-xs font-bold text-[#14243A] mb-1">
               Booking Status
@@ -576,6 +856,35 @@ export default function AdminInquiriesPage() {
         )}
 
         <form id="manual-inquiry-form" onSubmit={handleCreateManualInquiry} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-[#14243A] mb-1">
+              Submission Type
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setNewSubmissionType('booking')}
+                className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                  newSubmissionType === 'booking'
+                    ? 'bg-[#0B2C50] text-white border-[#0B2C50]'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                Booking Request
+              </button>
+              <button
+                type="button"
+                onClick={() => setNewSubmissionType('inquiry')}
+                className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                  newSubmissionType === 'inquiry'
+                    ? 'bg-[#0B2C50] text-white border-[#0B2C50]'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                General Inquiry
+              </button>
+            </div>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-[#14243A] mb-1">
@@ -664,6 +973,13 @@ export default function AdminInquiriesPage() {
               </select>
             </div>
           </div>
+
+          {newDate && isShortNoticeDate(newDate) && (
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>Short-notice date selected (today/tomorrow). Customer should be informed of ₹1,000–₹2,000 possible short-notice fee.</span>
+            </div>
+          )}
         </form>
       </ResponsiveModal>
 

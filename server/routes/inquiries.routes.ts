@@ -25,6 +25,9 @@ router.post('/', async (req: Request, res: Response) => {
 
     const id = body.id || 'inq_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
 
+    const submission_type =
+      body.submission_type === 'inquiry' || body.type === 'inquiry' ? 'inquiry' : 'booking';
+
     const inquiry = await Inquiry.create({
       id,
       customer_name: String(body.customer_name).trim(),
@@ -39,6 +42,7 @@ router.post('/', async (req: Request, res: Response) => {
       trip_type: body.trip_type === 'round-trip' ? 'round-trip' : 'one-way',
       message: body.message || null,
       status: 'New',
+      submission_type,
       source: body.source || 'website',
     });
 

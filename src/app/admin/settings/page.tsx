@@ -6,7 +6,6 @@ import { Logo } from '@/components/common/Logo';
 import { DataStore } from '@/lib/data-store';
 import { SiteSettings } from '@/types';
 import { toast } from 'sonner';
-import { ImageManager } from '@/components/admin/ImageManager';
 
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState<'general' | 'contact' | 'social' | 'seo'>('general');
@@ -97,7 +96,7 @@ export default function AdminSettingsPage() {
       </div>
 
       {/* Tabs matching panel 10 */}
-      <div className="flex items-center gap-2 border-b border-[#E4E7EC]">
+      <div className="flex items-center gap-2 border-b border-[#E4E7EC] overflow-x-auto whitespace-nowrap">
         <button
           type="button"
           onClick={() => setActiveTab('general')}
@@ -188,20 +187,6 @@ export default function AdminSettingsPage() {
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#D0D5DD] text-xs text-[#101828] focus:outline-hidden focus:border-[#082B50]"
                 />
               </div>
-
-              {/* Universal ImageManager for Brand Logo */}
-              <ImageManager
-                label="Agency Brand Logo"
-                description="Upload brand logo (PNG with transparent background or SVG recommended) or paste URL."
-                value={logoUrl}
-                onChange={(newUrl: string, publicId?: string) => {
-                  setLogoUrl(newUrl);
-                  if (publicId) setLogoPublicId(publicId);
-                }}
-                folder="branding"
-                aspectRatio="wide"
-                recommendedSize="Recommended: 400 × 120 px (Transparent PNG/SVG)"
-              />
             </>
           )}
 

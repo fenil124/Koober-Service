@@ -106,6 +106,7 @@ export type InquiryStatus =
   | 'Cancelled';
 
 export type InquirySource = 'website' | 'phone' | 'whatsapp';
+export type SubmissionType = 'inquiry' | 'booking';
 
 export interface Inquiry {
   id: string;
@@ -121,6 +122,7 @@ export interface Inquiry {
   trip_type: 'one-way' | 'round-trip';
   message?: string | null;
   status: InquiryStatus;
+  submission_type?: SubmissionType;
   internal_notes?: string | null;
   agreed_price?: number | null;
   source: InquirySource;
@@ -167,5 +169,6 @@ export interface InquiryFormInput {
   car_name?: string;
   passengers: number;
   trip_type: 'one-way' | 'round-trip';
+  submission_type?: SubmissionType;
   message?: string;
 }

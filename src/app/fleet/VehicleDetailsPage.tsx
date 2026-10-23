@@ -27,7 +27,7 @@ import { Footer } from '@/components/layout/Footer';
 import { InquiryModal } from '@/components/common/InquiryModal';
 import { FloatingContactWidget } from '@/components/common/FloatingContactWidget';
 import { DataStore } from '@/lib/data-store';
-import { Car, SiteSettings, InquiryFormInput } from '@/types';
+import { Car, SiteSettings, InquiryFormInput, SubmissionType } from '@/types';
 
 export default function VehicleDetailsPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -43,6 +43,7 @@ export default function VehicleDetailsPage() {
 
   // Inquiry modal state
   const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<SubmissionType>('booking');
   const [prefilledInquiry, setPrefilledInquiry] = useState<Partial<InquiryFormInput>>({});
 
   const loadData = useCallback(async () => {
@@ -128,11 +129,23 @@ export default function VehicleDetailsPage() {
       .slice(0, 3);
   }, [allCars, car]);
 
+  const handleOpenGeneralInquiry = () => {
+    setModalMode('inquiry');
+    setPrefilledInquiry({
+      submission_type: 'inquiry',
+      car_id: car?.id,
+      car_name: car?.model_name || car?.name,
+    });
+    setIsInquiryModalOpen(true);
+  };
+
   const handleOpenBooking = () => {
+    setModalMode('booking');
     if (!car) return;
     setPrefilledInquiry({
       car_id: car.id,
       car_name: car.model_name || car.name,
+      submission_type: 'booking',
     });
     setIsInquiryModalOpen(true);
   };
@@ -209,7 +222,10 @@ export default function VehicleDetailsPage() {
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC]">
       {/* 1. Header Navbar */}
-      <Header onOpenInquiry={() => setIsInquiryModalOpen(true)} />
+      <Header
+        onOpenInquiry={handleOpenGeneralInquiry}
+        onOpenBooking={handleOpenBooking}
+      />
 
       {/* Main Content Area */}
       <main className="flex-1 pt-24 sm:pt-28 pb-16">
@@ -659,6 +675,7 @@ export default function VehicleDetailsPage() {
         open={isInquiryModalOpen}
         onOpenChange={setIsInquiryModalOpen}
         cars={allCars}
+        submissionType={modalMode}
         prefilledData={prefilledInquiry}
         onSuccess={loadData}
       />

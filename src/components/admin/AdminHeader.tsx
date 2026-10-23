@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Menu } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Logo } from '@/components/common/Logo';
 
 interface AdminHeaderProps {
   onToggleSidebar: () => void;
@@ -26,16 +25,11 @@ export function AdminHeader({ onToggleSidebar, adminEmail = 'admin@gmail.com', a
         {/* Mobile toggle */}
         <button
           onClick={onToggleSidebar}
-          className="lg:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 cursor-pointer"
+          className="lg:hidden p-2 -ml-2 rounded-lg text-slate-600 hover:bg-slate-100 cursor-pointer"
           aria-label="Toggle Navigation"
         >
           <Menu className="w-5 h-5" />
         </button>
-
-        {/* Brand Logo in Header on mobile when sidebar is hidden */}
-        <Link to="/admin" className="lg:hidden flex items-center">
-          <Logo variant="dark" size="xs" />
-        </Link>
       </div>
 
       <div className="flex items-center gap-4">

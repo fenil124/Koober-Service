@@ -13,7 +13,7 @@ import { Footer } from '@/components/layout/Footer';
 import { InquiryModal } from '@/components/common/InquiryModal';
 import { FloatingContactWidget } from '@/components/common/FloatingContactWidget';
 import { DataStore } from '@/lib/data-store';
-import { Car, Route, Destination, Review, SiteSettings, HomepageSection, InquiryFormInput } from '@/types';
+import { Car, Route, Destination, Review, SiteSettings, HomepageSection, InquiryFormInput, SubmissionType } from '@/types';
 
 export default function HomePage() {
   const [cars, setCars] = useState<Car[]>([]);
@@ -25,6 +25,7 @@ export default function HomePage() {
 
   // Reusable enquiry modal state
   const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<SubmissionType>('booking');
   const [prefilledInquiry, setPrefilledInquiry] = useState<Partial<InquiryFormInput>>({});
 
   const isLoadingRef = useRef(false);
@@ -75,41 +76,103 @@ export default function HomePage() {
     };
   }, [loadData]);
 
+  // Automatic Inquiry Popup after 5 seconds, once per browser session
+  useEffect(() => {
+    try {
+      const alreadyShown = sessionStorage.getItem('koober_inquiry_popup_shown');
+      if (alreadyShown) return;
+
+      const timer = setTimeout(() => {
+        const checkAgain = sessionStorage.getItem('koober_inquiry_popup_shown');
+        if (!checkAgain) {
+          sessionStorage.setItem('koober_inquiry_popup_shown', 'true');
+          setModalMode('inquiry');
+          setPrefilledInquiry({ submission_type: 'inquiry' });
+          setIsInquiryModalOpen(true);
+        }
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    } catch (e) {
+      // Ignore if sessionStorage is not accessible
+    }
+  }, []);
+
+  const handleModalOpenChange = (open: boolean) => {
+    setIsInquiryModalOpen(open);
+    if (!open) {
+      try {
+        sessionStorage.setItem('koober_inquiry_popup_shown', 'true');
+      } catch (e) {}
+    }
+  };
+
   const handleOpenGeneralInquiry = () => {
-    setPrefilledInquiry({});
+    try {
+      sessionStorage.setItem('koober_inquiry_popup_shown', 'true');
+    } catch (e) {}
+    setModalMode('inquiry');
+    setPrefilledInquiry({ submission_type: 'inquiry' });
+    setIsInquiryModalOpen(true);
+  };
+
+  const handleOpenBooking = () => {
+    try {
+      sessionStorage.setItem('koober_inquiry_popup_shown', 'true');
+    } catch (e) {}
+    setModalMode('booking');
+    setPrefilledInquiry({ submission_type: 'booking' });
     setIsInquiryModalOpen(true);
   };
 
   const handleSelectCar = (car: Car) => {
+    try {
+      sessionStorage.setItem('koober_inquiry_popup_shown', 'true');
+    } catch (e) {}
+    setModalMode('booking');
     setPrefilledInquiry({
       car_id: car.id,
       car_name: car.name,
+      submission_type: 'booking',
     });
     setIsInquiryModalOpen(true);
   };
 
   const handleSelectRoute = (origin: string, destination: string, carName?: string) => {
+    try {
+      sessionStorage.setItem('koober_inquiry_popup_shown', 'true');
+    } catch (e) {}
+    setModalMode('booking');
     setPrefilledInquiry((prev) => ({
       ...prev,
       pickup_location: origin,
       destination,
       car_name: carName || prev.car_name,
+      submission_type: 'booking',
     }));
     setIsInquiryModalOpen(true);
   };
 
   const handleSelectDestination = (destName: string) => {
+    try {
+      sessionStorage.setItem('koober_inquiry_popup_shown', 'true');
+    } catch (e) {}
+    setModalMode('booking');
     setPrefilledInquiry((prev) => ({
       ...prev,
       destination: destName,
+      submission_type: 'booking',
     }));
     setIsInquiryModalOpen(true);
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      {/* 1. Sticky Header Navbar with gold Book Now button */}
-      <Header onOpenInquiry={handleOpenGeneralInquiry} />
+      {/* 1. Sticky Header Navbar with Inquiry Now and Book Now buttons */}
+      <Header
+        onOpenInquiry={handleOpenGeneralInquiry}
+        onOpenBooking={handleOpenBooking}
+      />
 
       <main className="flex-1">
         {/* 2. Cinematic Hero Section with 2.5s continuous showcase */}
@@ -117,7 +180,7 @@ export default function HomePage() {
           cars={cars}
           content={content['hero']}
           settings={settings}
-          onBookClick={handleOpenGeneralInquiry}
+          onBookClick={handleOpenBooking}
         />
 
         {/* 3. Complete Fleet Section with all active cars */}
@@ -130,6 +193,7 @@ export default function HomePage() {
         {/* 4. Complete About Us Section */}
         <AboutSection
           content={content['about']}
+          featuresContent={content['features']}
           settings={settings}
         />
 
@@ -154,8 +218,10 @@ export default function HomePage() {
 
         {/* 8. Booking Call-To-Action */}
         <CtaSection
-          onBookClick={handleOpenGeneralInquiry}
+          onBookClick={handleOpenBooking}
           phone={settings?.phone}
+          content={content['contact']}
+          settings={settings}
         />
       </main>
 
@@ -165,8 +231,9 @@ export default function HomePage() {
       {/* 10. Reusable Popup Enquiry Modal */}
       <InquiryModal
         open={isInquiryModalOpen}
-        onOpenChange={setIsInquiryModalOpen}
+        onOpenChange={handleModalOpenChange}
         cars={cars}
+        submissionType={modalMode}
         prefilledData={prefilledInquiry}
         onSuccess={loadData}
       />

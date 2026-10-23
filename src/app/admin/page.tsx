@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { DataStore } from '@/lib/data-store';
 import { Inquiry, Car, Route, InquiryStatus } from '@/types';
 import { InquiryStatusBadgeSelect } from '@/components/admin/InquiryStatusBadgeSelect';
+import { formatDate, isShortNoticeDate } from '@/lib/utils';
 
 // High-contrast custom Tooltip component adhering strictly to Section 4
 function CustomChartTooltip({ active, payload, label }: any) {
@@ -416,33 +417,54 @@ function AdminDashboardOverview() {
                   No recent inquiries recorded yet.
                 </p>
               ) : (
-                recentInquiries.map((inq) => (
-                  <div key={inq.id} className="py-3 sm:py-3.5 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-full bg-slate-100 text-[#0B2C50] font-bold text-xs flex items-center justify-center shrink-0">
-                        {inq.customer_name.charAt(0)}
-                      </div>
-                      <div className="min-w-0">
-                        <span className="block text-xs font-bold text-[#14243A] truncate">
-                          {inq.customer_name}
-                        </span>
-                        <span className="block text-[11px] text-[#64748B] truncate">
-                          {inq.pickup_location} &rarr; {inq.destination}
-                        </span>
-                      </div>
-                    </div>
+                recentInquiries.map((inq) => {
+                  const isBooking = inq.submission_type !== 'inquiry';
+                  const isShortNotice = isShortNoticeDate(inq.travel_date);
 
-                    <div className="shrink-0">
-                      <InquiryStatusBadgeSelect
-                        status={inq.status}
-                        inquiryId={inq.id}
-                        onStatusChange={(newStatus) => handleDirectStatusChange(inq.id, newStatus)}
-                        isLoading={loadingStatusId === inq.id}
-                        disabled={loadingStatusId !== null}
-                      />
+                  return (
+                    <div key={inq.id} className="py-3 sm:py-3.5 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-full bg-slate-100 text-[#0B2C50] font-bold text-xs flex items-center justify-center shrink-0">
+                          {inq.customer_name.charAt(0)}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-bold text-[#14243A] truncate">
+                              {inq.customer_name}
+                            </span>
+                            {isBooking ? (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+                                Booking Request
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-sky-50 text-sky-700 border border-sky-200 shrink-0">
+                                Inquiry
+                              </span>
+                            )}
+                            {isShortNotice && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 shrink-0">
+                                Short Notice
+                              </span>
+                            )}
+                          </div>
+                          <span className="block text-[11px] text-[#64748B] truncate mt-0.5">
+                            {inq.pickup_location} &rarr; {inq.destination} &bull; {formatDate(inq.travel_date)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="shrink-0">
+                        <InquiryStatusBadgeSelect
+                          status={inq.status}
+                          inquiryId={inq.id}
+                          onStatusChange={(newStatus) => handleDirectStatusChange(inq.id, newStatus)}
+                          isLoading={loadingStatusId === inq.id}
+                          disabled={loadingStatusId !== null}
+                        />
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>

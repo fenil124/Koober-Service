@@ -210,8 +210,36 @@ export default function AdminRoutesPage() {
         </button>
       </div>
 
-      {/* Tabs & Search Filter */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Mobile Controls (Search Row 1, Status Dropdown Row 2) */}
+      <div className="flex flex-col gap-3 md:hidden">
+        {/* Row 1: Full-width search */}
+        <div className="relative w-full">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by origin or destination..."
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white border border-[#E2E8F0] text-xs text-[#14243A] placeholder:text-slate-400 focus:outline-hidden focus:border-[#0B2C50] shadow-2xs"
+          />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+        </div>
+
+        {/* Row 2: Status Dropdown */}
+        <div className="relative w-full">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            className="w-full px-3 py-2.5 rounded-xl bg-white border border-[#E2E8F0] text-xs font-bold text-[#14243A] focus:outline-hidden focus:border-[#0B2C50] shadow-2xs cursor-pointer truncate"
+          >
+            <option value="All">All Statuses ({allCount})</option>
+            <option value="Active">Active Routes ({activeCount})</option>
+            <option value="Inactive">Inactive Routes ({inactiveCount})</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Desktop Controls (Tabs on Left, Search on Right) */}
+      <div className="hidden md:flex md:items-center justify-between gap-4">
         <div className="flex items-center gap-1.5 p-1 bg-white border border-[#E2E8F0] rounded-xl self-start shadow-2xs">
           <button
             type="button"
@@ -260,9 +288,100 @@ export default function AdminRoutesPage() {
         </div>
       </div>
 
-      {/* Table */}
+      {/* Routes Content (Mobile Cards on md:hidden, Full Table on hidden md:block) */}
       <div className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden shadow-2xs">
-        <div className="overflow-x-auto">
+        {/* Mobile Route Cards */}
+        <div className="md:hidden divide-y divide-[#E2E8F0]">
+          {filtered.length === 0 ? (
+            <div className="py-12 px-4 text-center text-xs text-[#64748B]">
+              No routes found matching your criteria.
+            </div>
+          ) : (
+            filtered.map((route, idx) => {
+              const displayPrice =
+                route.prices && route.prices.length > 0 ? route.prices[0].price : null;
+
+              return (
+                <div key={route.id} className="p-4 space-y-3 hover:bg-slate-50/70 transition-colors">
+                  {/* Origin to Destination Header with Status Toggle */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-extrabold text-sm text-[#0B2C50]">
+                          {route.origin}
+                        </span>
+                        <span className="text-slate-400 font-bold">&rarr;</span>
+                        <span className="font-extrabold text-sm text-[#0B2C50]">
+                          {route.destination}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-[#64748B] mt-0.5">
+                        Route #{idx + 1}
+                      </div>
+                    </div>
+
+                    {/* Active/Inactive Status Toggle */}
+                    <div className="shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleRouteActive(route)}
+                        disabled={loadingRouteId === route.id}
+                        title="Click to toggle availability"
+                        className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border transition-all cursor-pointer shadow-2xs hover:opacity-85 active:scale-95 ${
+                          route.is_active
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-slate-100 text-slate-500 border-slate-200'
+                        }`}
+                      >
+                        {loadingRouteId === route.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Power className="w-2.5 h-2.5" />
+                        )}
+                        <span>{route.is_active ? 'Active' : 'Inactive'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Standard Fare Capsule */}
+                  <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-100 flex items-center justify-between text-xs">
+                    <span className="text-slate-500 font-medium">Standard Fare:</span>
+                    <span className="font-extrabold text-[#0B2C50] text-sm">
+                      {displayPrice !== null && displayPrice !== undefined && displayPrice > 0
+                        ? formatINR(displayPrice)
+                        : 'Get a Quote'}
+                    </span>
+                  </div>
+
+                  {/* Actions Row */}
+                  <div className="flex items-center justify-end gap-2 pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEdit(route)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-[#0B2C50] hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 bg-white cursor-pointer"
+                      title="Edit Route"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteTarget(route)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-red-200 bg-white cursor-pointer"
+                      title="Delete Route"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop Table (hidden md:block) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[#64748B] font-bold uppercase tracking-wider text-[11px]">
               <tr>

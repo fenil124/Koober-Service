@@ -41,9 +41,10 @@ export function RoutesSection({ routes, onSelectRoute }: RoutesSectionProps) {
     },
   ];
 
-  // Map database routes if available, or use canonical
-  const displayRoutes = routes.length >= 4
-    ? routes.slice(0, 4).map((r) => ({
+  // Map active database routes dynamically if available, or use canonical fallback
+  const activeRoutes = routes.filter((r) => r.is_active);
+  const displayRoutes = activeRoutes.length > 0
+    ? activeRoutes.slice(0, 4).map((r) => ({
         id: r.id,
         origin: r.origin,
         destination: r.destination,

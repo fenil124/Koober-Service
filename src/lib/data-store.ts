@@ -511,6 +511,7 @@ const INITIAL_INQUIRIES: Inquiry[] = [
     passengers: 6,
     trip_type: 'one-way',
     status: 'New',
+    submission_type: 'booking',
     source: 'website',
     created_at: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
   },
@@ -527,6 +528,7 @@ const INITIAL_INQUIRIES: Inquiry[] = [
     passengers: 4,
     trip_type: 'round-trip',
     status: 'Contacted',
+    submission_type: 'inquiry',
     source: 'website',
     created_at: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
   },
@@ -1006,8 +1008,12 @@ export const DataStore = {
     try {
       const data = await apiRequest<Inquiry[]>('/api/inquiries');
       if (Array.isArray(data)) {
-        setCache(STORAGE_KEYS.INQUIRIES, data);
-        return data;
+        const normalized = data.map((item) => ({
+          ...item,
+          submission_type: item.submission_type || 'booking',
+        }));
+        setCache(STORAGE_KEYS.INQUIRIES, normalized);
+        return normalized;
       }
       return [];
     } catch (err: any) {
@@ -1021,7 +1027,11 @@ export const DataStore = {
         throw err;
       }
       console.warn('API getInquiries error:', err);
-      return getStorage<Inquiry[]>(STORAGE_KEYS.INQUIRIES, []);
+      const cached = getStorage<Inquiry[]>(STORAGE_KEYS.INQUIRIES, []);
+      return cached.map((item) => ({
+        ...item,
+        submission_type: item.submission_type || 'booking',
+      }));
     }
   },
 
@@ -1036,10 +1046,21 @@ export const DataStore = {
     return data;
   },
 
-  async updateInquiryStatus(id: string, status: Inquiry['status'], notes?: string, agreedPrice?: number): Promise<Inquiry | null> {
+  async updateInquiryStatus(
+    id: string,
+    status: Inquiry['status'],
+    notes?: string,
+    agreedPrice?: number,
+    submissionType?: Inquiry['submission_type']
+  ): Promise<Inquiry | null> {
     const updated = await apiRequest<Inquiry>(`/api/inquiries/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ status, internal_notes: notes, agreed_price: agreedPrice }),
+      body: JSON.stringify({
+        status,
+        internal_notes: notes,
+        agreed_price: agreedPrice,
+        ...(submissionType ? { submission_type: submissionType } : {}),
+      }),
     });
     const inquiries = getStorage<Inquiry[]>(STORAGE_KEYS.INQUIRIES, INITIAL_INQUIRIES);
     const idx = inquiries.findIndex((i) => i.id === id);

@@ -28,6 +28,7 @@ export const inquiryFormSchema = z.object({
     .min(1, { message: 'At least 1 passenger' })
     .max(30, { message: 'Maximum 30 passengers' }),
   trip_type: z.enum(['one-way', 'round-trip']),
+  submission_type: z.enum(['inquiry', 'booking']).optional(),
   message: z.string().max(500, { message: 'Message is too long' }).optional(),
 });
 

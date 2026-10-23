@@ -181,7 +181,21 @@ export default function AdminReviewsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1.5 p-1 bg-white border border-[#E2E8F0] rounded-xl self-start shadow-2xs">
+      {/* Mobile: Compact Select Dropdown */}
+      <div className="relative w-full md:hidden">
+        <select
+          value={activeTab}
+          onChange={(e) => setActiveTab(e.target.value as any)}
+          className="w-full px-3 py-2.5 rounded-xl bg-white border border-[#E2E8F0] text-xs font-bold text-[#14243A] focus:outline-hidden focus:border-[#0B2C50] shadow-2xs cursor-pointer truncate"
+        >
+          <option value="all">All Reviews ({allCount})</option>
+          <option value="approved">Approved ({approvedCount})</option>
+          <option value="pending">Pending Moderation ({pendingCount})</option>
+        </select>
+      </div>
+
+      {/* Desktop: Horizontal Pill Tabs */}
+      <div className="hidden md:flex items-center gap-1.5 p-1 bg-white border border-[#E2E8F0] rounded-xl self-start shadow-2xs">
         <button
           type="button"
           onClick={() => setActiveTab('all')}
