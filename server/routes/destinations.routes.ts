@@ -67,7 +67,7 @@ router.post('/', requireAdmin, async (req: AuthenticatedRequest, res: Response) 
     const destination = await Destination.findOneAndUpdate(
       { id },
       { ...body, id },
-      { new: true, upsert: true, runValidators: true }
+      { returnDocument: 'after', upsert: true, runValidators: true }
     );
 
     const obj = destination.toJSON ? destination.toJSON() : destination;
@@ -98,7 +98,7 @@ router.put('/:id', requireAdmin, async (req: AuthenticatedRequest, res: Response
     const destination = await Destination.findOneAndUpdate(
       { id },
       { ...body, id },
-      { new: true, upsert: true, runValidators: true }
+      { returnDocument: 'after', upsert: true, runValidators: true }
     );
 
     const obj = destination.toJSON ? destination.toJSON() : destination;

@@ -41,7 +41,7 @@ router.put('/', requireAdmin, async (req: AuthenticatedRequest, res: Response) =
     const settings = await SiteSettings.findOneAndUpdate(
       { id: 'default' },
       { ...body, id: 'default' },
-      { new: true, upsert: true, runValidators: true }
+      { returnDocument: 'after', upsert: true, runValidators: true }
     );
 
     return res.json(settings);

@@ -135,7 +135,7 @@ async function migrate() {
       full_description: car.full_description || null,
     };
 
-    await Car.findOneAndUpdate({ id: car.id }, payload, { upsert: true, new: true });
+    await Car.findOneAndUpdate({ id: car.id }, payload, { upsert: true, returnDocument: 'after' });
     stats.cars++;
   }
 
@@ -163,7 +163,7 @@ async function migrate() {
       prices: pricesForRoute,
     };
 
-    await Route.findOneAndUpdate({ id: r.id }, payload, { upsert: true, new: true });
+    await Route.findOneAndUpdate({ id: r.id }, payload, { upsert: true, returnDocument: 'after' });
     stats.routes++;
   }
 
@@ -190,7 +190,7 @@ async function migrate() {
       best_time_to_visit: d.best_time_to_visit || null,
     };
 
-    await Destination.findOneAndUpdate({ id: d.id }, payload, { upsert: true, new: true });
+    await Destination.findOneAndUpdate({ id: d.id }, payload, { upsert: true, returnDocument: 'after' });
     stats.destinations++;
   }
 
@@ -212,7 +212,7 @@ async function migrate() {
       display_order: rev.display_order || 0,
     };
 
-    await Review.findOneAndUpdate({ id: rev.id }, payload, { upsert: true, new: true });
+    await Review.findOneAndUpdate({ id: rev.id }, payload, { upsert: true, returnDocument: 'after' });
     stats.reviews++;
   }
 
@@ -239,7 +239,7 @@ async function migrate() {
       source: inq.source || 'website',
     };
 
-    await Inquiry.findOneAndUpdate({ id: inq.id }, payload, { upsert: true, new: true });
+    await Inquiry.findOneAndUpdate({ id: inq.id }, payload, { upsert: true, returnDocument: 'after' });
     stats.inquiries++;
   }
 
@@ -259,7 +259,7 @@ async function migrate() {
       cloudinary_public_id: secImg.public_id || null,
     };
 
-    await HomepageSection.findOneAndUpdate({ id: sec.id }, payload, { upsert: true, new: true });
+    await HomepageSection.findOneAndUpdate({ id: sec.id }, payload, { upsert: true, returnDocument: 'after' });
     stats.homepage_sections++;
   }
 
@@ -311,7 +311,7 @@ async function migrate() {
       youtube_url: s.youtube_url || '',
       cta_text: s.cta_text || 'Book Your Ride',
     },
-    { upsert: true, new: true }
+    { upsert: true, returnDocument: 'after' }
   );
   stats.settings = 1;
 

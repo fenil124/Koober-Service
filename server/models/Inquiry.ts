@@ -1,5 +1,48 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export type InquiryStatus =
+  | 'New'
+  | 'Contacted'
+  | 'Quotation Given'
+  | 'Confirmed'
+  | 'Completed'
+  | 'Cancelled';
+
+export const VALID_INQUIRY_STATUSES: InquiryStatus[] = [
+  'New',
+  'Contacted',
+  'Quotation Given',
+  'Confirmed',
+  'Completed',
+  'Cancelled',
+];
+
+const STATUS_NORMALIZATION_MAP: Record<string, InquiryStatus> = {
+  'new': 'New',
+  'contacted': 'Contacted',
+  'quotation given': 'Quotation Given',
+  'quotation_given': 'Quotation Given',
+  'quotation-given': 'Quotation Given',
+  'quote given': 'Quotation Given',
+  'confirmed': 'Confirmed',
+  'completed': 'Completed',
+  'cancelled': 'Cancelled',
+  'canceled': 'Cancelled',
+};
+
+export function normalizeInquiryStatus(raw?: string | null): InquiryStatus {
+  if (!raw) return 'New';
+  const trimmed = String(raw).trim();
+  const lower = trimmed.toLowerCase();
+  if (STATUS_NORMALIZATION_MAP[lower]) {
+    return STATUS_NORMALIZATION_MAP[lower];
+  }
+  if (VALID_INQUIRY_STATUSES.includes(trimmed as InquiryStatus)) {
+    return trimmed as InquiryStatus;
+  }
+  return 'New';
+}
+
 export interface IInquiry extends Document {
   id: string;
   customer_name: string;
@@ -13,7 +56,7 @@ export interface IInquiry extends Document {
   passengers: number;
   trip_type: 'one-way' | 'round-trip';
   message?: string | null;
-  status: 'New' | 'Confirmed' | 'Completed' | 'Cancelled';
+  status: InquiryStatus;
   submission_type?: 'inquiry' | 'booking';
   internal_notes?: string | null;
   agreed_price?: number | null;
@@ -38,7 +81,8 @@ const InquirySchema = new Schema<IInquiry>(
     message: { type: String, default: null },
     status: {
       type: String,
-      enum: ['New', 'Confirmed', 'Completed', 'Cancelled'],
+      enum: VALID_INQUIRY_STATUSES,
+      set: (val: string) => normalizeInquiryStatus(val),
       default: 'New',
       index: true,
     },
@@ -62,6 +106,9 @@ const InquirySchema = new Schema<IInquiry>(
       transform(_doc, ret: any) {
         if (!ret.submission_type) {
           ret.submission_type = 'booking';
+        }
+        if (ret.status) {
+          ret.status = normalizeInquiryStatus(ret.status);
         }
         delete ret.__v;
         delete ret._id;

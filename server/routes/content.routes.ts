@@ -87,7 +87,7 @@ router.put('/:id', requireAdmin, async (req: AuthenticatedRequest, res: Response
     };
 
     const section = await HomepageSection.findOneAndUpdate({ id }, payload, {
-      new: true,
+      returnDocument: 'after',
       upsert: true,
       runValidators: true,
     });

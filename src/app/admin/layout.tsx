@@ -99,15 +99,16 @@ export default function AdminLayout({ children }: { children?: React.ReactNode }
           adminName={user?.fullName}
         />
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto relative">
-          {isCheckingAuth && (
-            <div className="absolute inset-0 bg-[#F7F9FC]/95 z-20 flex items-center justify-center min-h-[300px]">
+          {isCheckingAuth ? (
+            <div className="flex items-center justify-center min-h-[300px] py-16">
               <div className="flex flex-col items-center gap-2.5">
                 <div className="w-8 h-8 border-3 border-[#082B50] border-t-[#F5B936] rounded-full animate-spin" />
                 <span className="text-xs font-semibold text-slate-500">Authenticating...</span>
               </div>
             </div>
+          ) : (
+            children ?? <Outlet />
           )}
-          {children ?? <Outlet />}
         </main>
       </div>
     </div>

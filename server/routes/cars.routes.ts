@@ -61,7 +61,7 @@ router.post('/', requireAdmin, async (req: AuthenticatedRequest, res: Response) 
     };
 
     const car = await Car.findOneAndUpdate({ id }, payload, {
-      new: true,
+      returnDocument: 'after',
       upsert: true,
       runValidators: true,
     });
@@ -95,7 +95,7 @@ router.put('/:id', requireAdmin, async (req: AuthenticatedRequest, res: Response
     const car = await Car.findOneAndUpdate(
       { id },
       updatePayload,
-      { new: true, upsert: true, runValidators: true }
+      { returnDocument: 'after', upsert: true, runValidators: true }
     );
 
     return res.json(formatCarResponse(car));

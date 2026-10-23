@@ -37,7 +37,7 @@ router.post('/', requireAdmin, async (req: AuthenticatedRequest, res: Response) 
     const route = await Route.findOneAndUpdate(
       { id },
       { ...body, id },
-      { new: true, upsert: true, runValidators: true }
+      { returnDocument: 'after', upsert: true, runValidators: true }
     );
 
     return res.status(201).json(route);
@@ -56,7 +56,7 @@ router.put('/:id', requireAdmin, async (req: AuthenticatedRequest, res: Response
     const route = await Route.findOneAndUpdate(
       { id },
       { ...body, id },
-      { new: true, upsert: true, runValidators: true }
+      { returnDocument: 'after', upsert: true, runValidators: true }
     );
 
     return res.json(route);

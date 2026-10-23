@@ -49,7 +49,7 @@ router.put('/:id', requireAdmin, async (req: AuthenticatedRequest, res: Response
     const review = await Review.findOneAndUpdate(
       { id },
       { ...body, id },
-      { new: true, upsert: true, runValidators: true }
+      { returnDocument: 'after', upsert: true, runValidators: true }
     );
 
     return res.json(review);

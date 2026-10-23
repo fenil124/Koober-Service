@@ -15,7 +15,7 @@ export async function connectDB(): Promise<typeof mongoose | null> {
 
   try {
     const conn = await mongoose.connect(uri, {
-      dbName: 'royalrides',
+      dbName: 'kooberservice',
       serverSelectionTimeoutMS: 10000,
     });
     isConnected = true;

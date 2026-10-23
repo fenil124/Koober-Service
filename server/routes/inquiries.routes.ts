@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { Inquiry } from '../models/Inquiry';
+import mongoose from 'mongoose';
+import { Inquiry, normalizeInquiryStatus } from '../models/Inquiry';
 import { requireAdmin, requireStaffOrAdmin, AuthenticatedRequest } from '../auth';
 
 const router = Router();
@@ -8,7 +9,12 @@ const router = Router();
 router.get('/', requireStaffOrAdmin, async (_req: AuthenticatedRequest, res: Response) => {
   try {
     const inquiries = await Inquiry.find().sort({ created_at: -1 });
-    return res.json(inquiries);
+    const normalized = inquiries.map((doc) => {
+      const obj = doc.toJSON ? doc.toJSON() : doc.toObject();
+      obj.status = normalizeInquiryStatus(obj.status);
+      return obj;
+    });
+    return res.json(normalized);
   } catch (err: any) {
     console.error('Error fetching inquiries:', err);
     return res.status(500).json({ error: 'Failed to fetch inquiries' });
@@ -59,17 +65,25 @@ router.put('/:id', requireAdmin, async (req: AuthenticatedRequest, res: Response
     const { id } = req.params;
     const body = req.body || {};
 
+    if (body.status !== undefined) {
+      body.status = normalizeInquiryStatus(body.status);
+    }
+
+    const filter = mongoose.isValidObjectId(id) ? { $or: [{ id }, { _id: id }] } : { id };
+
     const inquiry = await Inquiry.findOneAndUpdate(
-      { id },
+      filter,
       { ...body, id },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     );
 
     if (!inquiry) {
       return res.status(404).json({ error: 'Inquiry not found' });
     }
 
-    return res.json(inquiry);
+    const result = inquiry.toJSON ? inquiry.toJSON() : inquiry.toObject();
+    result.status = normalizeInquiryStatus(result.status);
+    return res.json(result);
   } catch (err: any) {
     console.error('Error updating inquiry:', err);
     return res.status(500).json({ error: err?.message || 'Failed to update inquiry' });
@@ -80,7 +94,8 @@ router.put('/:id', requireAdmin, async (req: AuthenticatedRequest, res: Response
 router.delete('/:id', requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const result = await Inquiry.findOneAndDelete({ id });
+    const filter = mongoose.isValidObjectId(id) ? { $or: [{ id }, { _id: id }] } : { id };
+    const result = await Inquiry.findOneAndDelete(filter);
     if (!result) {
       return res.status(404).json({ error: 'Inquiry not found' });
     }
