@@ -23,7 +23,7 @@ router.post('/login', async (req: Request, res: Response) => {
     let user = await User.findOne({ email: cleanEmail });
 
     // Fallback seed for demo / first-time admin if no users exist
-    if (!user && (cleanEmail === 'admin@royalrides.com' || cleanEmail === 'admin@gmail.com')) {
+    if (!user && (cleanEmail === 'admin@royalrides.com' || cleanEmail === 'admin@gmail.com' || cleanEmail === 'admin@koober.com')) {
       const count = await User.countDocuments();
       if (count === 0) {
         const hashedPassword = await hashPassword('admin@royalrides123');
@@ -45,7 +45,7 @@ router.post('/login', async (req: Request, res: Response) => {
     if (!isMatch) {
       // Also permit initial demo admin password fallback if standard admin email
       if (
-        (cleanEmail === 'admin@royalrides.com' || cleanEmail === 'admin@gmail.com') &&
+        (cleanEmail === 'admin@royalrides.com' || cleanEmail === 'admin@gmail.com' || cleanEmail === 'admin@koober.com') &&
         (password === 'admin123' || password === 'admin@royalrides123')
       ) {
         // Automatically re-hash and update password
